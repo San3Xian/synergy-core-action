@@ -1,4 +1,4 @@
-name: pull docker image and push to ali registry
+name: build package for macOS-12
 
 on: workflow_dispatch
 jobs:
