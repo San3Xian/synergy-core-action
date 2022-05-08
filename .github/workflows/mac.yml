@@ -1,0 +1,51 @@
+name: pull docker image and push to ali registry
+
+on:
+  release:
+    types: [created]
+
+jobs:
+  handle_image:
+    env:
+        my_ali_registryaddr: registry.cn-shenzhen.aliyuncs.com/action_0/github
+    runs-on: ubuntu-latest
+    steps:
+    
+    - name: Log into registry
+      run: |
+        echo -n "${{ secrets.registrytoken }}" | docker login --password-stdin --username=${{ secrets.registryuser }} $my_ali_registryaddr
+    
+    - name: set image name and version
+      run: |
+        echo "::set-env name=IMAGE_NAME::"$(echo -n ${{github.ref}} | sed  -r "s#(^refs/tags/)|(_\._.*$)|\s##g")
+        echo "::set-env name=IMAGE_TAG_NAME::"$(echo -n ${{github.ref}} | sed  -r "s#(^.*/)|(_\._.*$)|\s##g")
+        echo "::set-env name=IMAGE_VERSION::"$(echo -n ${{github.ref}} | sed  -r "s#(^.*_\._)|\s##g")
+        
+    - name: Pull image
+      run: |
+        echo "::set-env name=IMAGE::"${IMAGE_TAG_NAME}"_._"${IMAGE_VERSION}
+        echo "[Debug]IMAGE:"$IMAGE_NAME
+        echo "[Debug]IMAGE_VERSION:"$IMAGE_VERSION
+        docker pull "$IMAGE_NAME":"$IMAGE_VERSION"
+        docker images
+    
+    - name: Save image to a tar.gz archive file
+      run: |
+         docker save "$IMAGE_NAME":"$IMAGE_VERSION" | gzip > "$IMAGE".tar.gz
+    
+    - name: Upload the archive file to artifact space
+      uses: actions/upload-artifact@v1
+      with:
+       name: ${{env.IMAGE}}
+       path: ${{env.IMAGE}}.tar.gz
+      
+    - name: Push image
+      run: |
+        docker tag "$IMAGE_NAME":"$IMAGE_VERSION" $my_ali_registryaddr:"$IMAGE"
+        docker push "$my_ali_registryaddr":"$IMAGE"
+        echo "* v * =============="
+        echo "* v * ==[succeed]==="
+        echo "Run command at your server:"
+        echo "docker pull $my_ali_registryaddr:$IMAGE"
+        echo "* v * =============="
+
