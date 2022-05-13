@@ -80,7 +80,9 @@ jobs:
 
       - name: Sign applicaiton
         run: |
+          set -x
           export PATH="$(brew --prefix qt5)/bin:$PATH"
+          pwd
           macdeployqt ${{ github.workspace }}/build/bundle/Synergy.app -codesign="$CODESIGN_ID"
           codesign -f --options runtime --deep -s "$CODESIGN_ID" ${{ github.workspace }}/build/bundle/Synergy.app
           ln -s /Applications ${{ github.workspace }}/build/bundle/Applications
