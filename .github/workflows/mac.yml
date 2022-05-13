@@ -83,6 +83,7 @@ jobs:
           set -x
           export PATH="$(brew --prefix qt5)/bin:$PATH"
           pwd
+          ls /Users/runner/work/synergy-core-action/synergy-core-action/build/bundle/
           macdeployqt ${{ github.workspace }}/build/bundle/Synergy.app -codesign="$CODESIGN_ID"
           codesign -f --options runtime --deep -s "$CODESIGN_ID" ${{ github.workspace }}/build/bundle/Synergy.app
           ln -s /Applications ${{ github.workspace }}/build/bundle/Applications
